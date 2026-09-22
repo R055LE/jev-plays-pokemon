@@ -3,5 +3,6 @@
 *.sav
 *.state
 .env
+.venv/
 __pycache__/
 *.pyc

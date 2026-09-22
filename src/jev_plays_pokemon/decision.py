@@ -58,8 +58,8 @@ class DecisionClient:
                 ),
             },
         )
-        button_answer = result.choices["button"]
-        hold_answer = result.choices["hold"]
+        button_answer = result.answers["button"]
+        hold_answer = result.answers["hold"]
         return Action(
             button=button_answer.choice,
             hold_frames=_HOLD_FRAMES[hold_answer.choice],
