@@ -18,8 +18,8 @@ class FakeChoiceAnswer:
 
 
 class FakeResponse:
-    def __init__(self, choices):
-        self.choices = choices
+    def __init__(self, answers):
+        self.answers = answers
 
 
 class FakeClient:

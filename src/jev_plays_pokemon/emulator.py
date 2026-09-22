@@ -30,12 +30,6 @@ class Emulator:
     def read_byte(self, address: int) -> int:
         return self._pyboy.memory[address]
 
-    def party(self) -> list[dict]:
-        return self._pyboy.game_wrapper.party
-
-    def money(self) -> int:
-        return self._pyboy.game_wrapper.money
-
     def dialogue_active(self) -> bool:
         return self._pyboy.tilemap_window[_DIALOGUE_TILE_X, _DIALOGUE_TILE_Y] == _DIALOGUE_ARROW_TILE_ID
 
