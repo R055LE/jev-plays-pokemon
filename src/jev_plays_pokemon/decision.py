@@ -14,19 +14,21 @@ _BUTTON_CRITERIA = {
     "SELECT": "Open the select-item shortcut menu",
 }
 
-_HOLD_CRITERIA = {
-    "TAP": "A quick single press, e.g. advancing one line of dialogue or moving one step",
-    "HOLD": "A medium hold, e.g. taking several steps in one direction",
-    "LONG": "A long hold, e.g. crossing most of a room in one direction",
+_LENGTH_CRITERIA = {
+    "ONE": "One tile, or one step of a menu cursor. Use this in menus and dialogue",
+    "FEW": "About three tiles in that direction",
+    "MANY": "About six tiles in that direction, e.g. crossing most of a room",
 }
 
-_HOLD_FRAMES = {"TAP": 2, "HOLD": 8, "LONG": 20}
+_LENGTH_TILES = {"ONE": 1, "FEW": 3, "MANY": 6}
+
+DIRECTIONS = frozenset({"UP", "DOWN", "LEFT", "RIGHT"})
 
 
 @dataclass
 class Action:
     button: str
-    hold_frames: int
+    tiles: int | None
     confidence: float
 
 
@@ -35,33 +37,30 @@ class DecisionClient:
         self._client = client or TypeSafeClient()
         self._retry_backoff_seconds = retry_backoff_seconds
 
-    def decide(self, state) -> Action:
+    def decide(self, state, excluded: frozenset[str] = frozenset()) -> Action:
         for attempt in range(2):
             try:
-                return self._ask_jev(state)
+                return self._ask_jev(state, excluded)
             except Exception:
                 if attempt == 0:
                     time.sleep(self._retry_backoff_seconds)
-        return Action(button="WAIT", hold_frames=0, confidence=0.0)
+        return Action(button="WAIT", tiles=None, confidence=0.0)
 
-    def _ask_jev(self, state) -> Action:
+    def _ask_jev(self, state, excluded: frozenset[str]) -> Action:
         result = self._client.system_one(
             state.to_dict(),
             {
                 "button": Choice(
                     instructions="Which single Game Boy button should be pressed next, given the current game state?",
-                    criteria=_BUTTON_CRITERIA,
+                    criteria={b: text for b, text in _BUTTON_CRITERIA.items() if b not in excluded},
                 ),
-                "hold": Choice(
-                    instructions="How long should the button be held?",
-                    criteria=_HOLD_CRITERIA,
+                "length": Choice(
+                    instructions="If the button is a direction, how far should the player move? Ignored for A, B, START and SELECT.",
+                    criteria=_LENGTH_CRITERIA,
                 ),
             },
         )
         button_answer = result.answers["button"]
-        hold_answer = result.answers["hold"]
-        return Action(
-            button=button_answer.choice,
-            hold_frames=_HOLD_FRAMES[hold_answer.choice],
-            confidence=button_answer.confidence,
-        )
+        button = button_answer.choice
+        tiles = _LENGTH_TILES[result.answers["length"].choice] if button in DIRECTIONS else None
+        return Action(button=button, tiles=tiles, confidence=button_answer.confidence)
