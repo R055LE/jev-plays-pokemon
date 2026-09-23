@@ -1,5 +1,7 @@
 from pyboy import PyBoy
 
+from .decision import DIRECTIONS
+
 _BUTTON_TO_PYBOY_NAME = {
     "UP": "up",
     "DOWN": "down",
@@ -15,17 +17,39 @@ _DIALOGUE_TILE_X = 18
 _DIALOGUE_TILE_Y = 16
 _DIALOGUE_ARROW_TILE_ID = 238
 
+# A Gen 1 overworld step is about 16 frames. Settle frames let the game react
+# before the next state read, so Jev sees the result of its last press.
+FRAMES_PER_TILE = 16
+BUTTON_PRESS_FRAMES = 4
+SETTLE_FRAMES = 20
+
+
+def hold_frames(button: str, tiles: int | None) -> int:
+    if button in DIRECTIONS:
+        return FRAMES_PER_TILE * tiles
+    return BUTTON_PRESS_FRAMES
+
 
 class Emulator:
-    def __init__(self, rom_path: str) -> None:
-        self._pyboy = PyBoy(rom_path, window="SDL2")
+    def __init__(self, rom_path: str, speed: float = 1, pyboy=None) -> None:
+        self._pyboy = pyboy or PyBoy(rom_path, window="SDL2")
+        self._pyboy.set_emulation_speed(speed)
 
-    def press(self, button: str, hold_frames: int) -> None:
-        self._pyboy.button(_BUTTON_TO_PYBOY_NAME[button], delay=hold_frames)
-        self._pyboy.tick(hold_frames, True)
-
-    def wait(self, frames: int = 1) -> None:
+    def press(self, button: str, tiles: int | None) -> None:
+        frames = hold_frames(button, tiles)
+        self._pyboy.button(_BUTTON_TO_PYBOY_NAME[button], delay=frames)
         self._pyboy.tick(frames, True)
+        self._pyboy.tick(SETTLE_FRAMES, True)
+
+    def wait(self) -> None:
+        self._pyboy.tick(SETTLE_FRAMES, True)
+
+    def tilemap_hash(self) -> int:
+        # Tilemaps hold tile ids, not tile graphics or sprites, so animated
+        # water and walking NPCs shouldn't change this.
+        background = tuple(map(tuple, self._pyboy.tilemap_background[:, :]))
+        window = tuple(map(tuple, self._pyboy.tilemap_window[:, :]))
+        return hash((background, window))
 
     def read_byte(self, address: int) -> int:
         return self._pyboy.memory[address]
