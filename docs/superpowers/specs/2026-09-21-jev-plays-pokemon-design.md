@@ -15,7 +15,8 @@ part of this build.
 - Streaming or any remote-viewer web UI.
 - Save/resume between runs. Each run starts from the beginning of the
   game; if the process stops, you start it again.
-- Automatic stuck-state recovery (see Error Handling).
+- Automatic stuck-state recovery (see Error Handling). Designed later in
+  `2026-09-22-stuck-recovery-design.md`.
 - Any action space beyond single button presses (no macros like "walk to
   the Pokemon Center").
 
