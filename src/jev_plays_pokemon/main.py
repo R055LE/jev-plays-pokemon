@@ -10,7 +10,7 @@ from .progress import ProgressTracker
 from .state import read_game_state
 
 
-def run(rom_path: str, log_path: str, max_turns: int | None = None, speed: float = 1,
+def run(rom_path: str, log_path: str, max_turns: int | None = None, speed: int = 1,
         emulator=None, decision_client=None) -> None:
     emulator = emulator or Emulator(rom_path, speed=speed)
     decision_client = decision_client or DecisionClient()
@@ -54,7 +54,7 @@ def main() -> None:
     parser.add_argument("--rom", required=True, help="Path to a legally-owned Pokemon Blue ROM file")
     parser.add_argument("--log", default="turns.jsonl", help="Path to the turn-by-turn JSON lines log")
     parser.add_argument("--max-turns", type=int, default=None, help="Stop after this many turns (default: run until Ctrl-C)")
-    parser.add_argument("--speed", type=float, default=1, help="Emulation speed multiplier, 0 for uncapped (default: 1)")
+    parser.add_argument("--speed", type=int, default=1, help="Whole-number emulation speed multiplier, 0 for uncapped (default: 1)")
     args = parser.parse_args()
     run(args.rom, args.log, max_turns=args.max_turns, speed=args.speed)
 

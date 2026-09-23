@@ -33,4 +33,5 @@ class ProgressTracker:
         if self.turns_since_progress % self._stretch == 0:
             excluded = self.excluded | self._stretch_buttons
             self._stretch_buttons.clear()
-            self.excluded = frozenset() if len(excluded) == len(BUTTONS) else frozenset(excluded)
+            # Leaving Jev a single option would be the harness choosing for it.
+            self.excluded = frozenset() if len(excluded) >= len(BUTTONS) - 1 else frozenset(excluded)

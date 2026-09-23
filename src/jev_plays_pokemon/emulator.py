@@ -17,6 +17,11 @@ _DIALOGUE_TILE_X = 18
 _DIALOGUE_TILE_Y = 16
 _DIALOGUE_ARROW_TILE_ID = 238
 
+# Background scroll registers. The overworld scrolls the same tilemap buffer
+# as the player walks, so the tilemap alone can miss a step.
+_SCY_ADDRESS = 0xFF42
+_SCX_ADDRESS = 0xFF43
+
 # A Gen 1 overworld step is about 16 frames. Settle frames let the game react
 # before the next state read, so Jev sees the result of its last press.
 FRAMES_PER_TILE = 16
@@ -31,25 +36,31 @@ def hold_frames(button: str, tiles: int | None) -> int:
 
 
 class Emulator:
-    def __init__(self, rom_path: str, speed: float = 1, pyboy=None) -> None:
+    def __init__(self, rom_path: str, speed: int = 1, pyboy=None) -> None:
         self._pyboy = pyboy or PyBoy(rom_path, window="SDL2")
         self._pyboy.set_emulation_speed(speed)
 
     def press(self, button: str, tiles: int | None) -> None:
         frames = hold_frames(button, tiles)
         self._pyboy.button(_BUTTON_TO_PYBOY_NAME[button], delay=frames)
-        self._pyboy.tick(frames, True)
-        self._pyboy.tick(SETTLE_FRAMES, True)
+        self._tick(frames + SETTLE_FRAMES)
 
     def wait(self) -> None:
-        self._pyboy.tick(SETTLE_FRAMES, True)
+        self._tick(SETTLE_FRAMES)
+
+    def _tick(self, frames: int) -> None:
+        # PyBoy frame-limits once per tick() call, so one call per frame keeps
+        # --speed honest and renders every frame to the window.
+        for _ in range(frames):
+            self._pyboy.tick(1, True)
 
     def tilemap_hash(self) -> int:
         # Tilemaps hold tile ids, not tile graphics or sprites, so animated
         # water and walking NPCs shouldn't change this.
         background = tuple(map(tuple, self._pyboy.tilemap_background[:, :]))
         window = tuple(map(tuple, self._pyboy.tilemap_window[:, :]))
-        return hash((background, window))
+        scroll = (self._pyboy.memory[_SCY_ADDRESS], self._pyboy.memory[_SCX_ADDRESS])
+        return hash((background, window, scroll))
 
     def read_byte(self, address: int) -> int:
         return self._pyboy.memory[address]

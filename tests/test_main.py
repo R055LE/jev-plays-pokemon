@@ -1,7 +1,9 @@
 import json
 
+import pytest
+
 from jev_plays_pokemon.decision import Action
-from jev_plays_pokemon.main import run
+from jev_plays_pokemon.main import main, run
 
 
 class FakeEmulator:
@@ -80,3 +82,10 @@ def test_stuck_button_is_excluded_from_the_next_decision(tmp_path):
     assert last["excluded_buttons"] == ["A"]
     assert last["action"] == {"button": "A", "tiles": None, "confidence": 0.9}
     assert "stuck" not in last
+
+
+def test_speed_must_be_a_whole_number(monkeypatch):
+    # PyBoy stores emulation speed as an int, so 0.5 would silently mean uncapped.
+    monkeypatch.setattr("sys.argv", ["main", "--rom", "rom.gb", "--speed", "0.5"])
+    with pytest.raises(SystemExit):
+        main()

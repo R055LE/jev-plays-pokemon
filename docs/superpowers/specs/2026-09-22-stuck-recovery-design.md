@@ -57,7 +57,8 @@ picks a button itself.
 
 Harness-only; Jev never sees any of this.
 
-- After each turn, hash the background and window tilemaps.
+- After each turn, hash the background and window tilemaps plus the scroll
+  registers (SCX/SCY), since the overworld scrolls one tilemap buffer.
 - A turn is progress if that hash hasn't appeared in the last 50 turns
   (`PROGRESS_WINDOW = 50`).
 - Walking, new dialogue text and opening a menu all produce new tilemaps.
@@ -77,8 +78,9 @@ Position alone isn't used, because a lot of real progress happens in place
 - Each further 10 turns without progress adds whatever was pressed in that
   stretch to the excluded set.
 - Any progress clears the excluded set.
-- If all 8 buttons would be excluded, the set resets to empty. Worst case is
-  about 80 turns to cycle every button.
+- If 7 or 8 buttons would be excluded, the set resets to empty. A one-option
+  Choice would be the harness choosing for Jev. Worst case is about 70 turns
+  to cycle every button.
 
 In the first run this would have excluded A at turn ~379.
 
@@ -93,8 +95,10 @@ not added, per the probe. They go in the log only.
   should always set it, because a stop signal doesn't reach the Python
   process through secrets-broker's sudo chain (the first run made ~700 calls
   after it was killed).
-- `--speed X`: passed to `pyboy.set_emulation_speed(X)`. Default 1 (real
-  time), 0 is uncapped.
+- `--speed X`: whole number passed to `pyboy.set_emulation_speed(X)` (PyBoy
+  stores it as an int). Default 1 (real time), 0 is uncapped. PyBoy only
+  frame-limits once per `tick()` call, so the emulator ticks one frame at a
+  time.
 
 ## Components
 

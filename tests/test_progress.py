@@ -64,11 +64,12 @@ def test_wait_counts_as_no_progress_but_excludes_nothing():
     assert tracker.excluded == frozenset()
 
 
-def test_excluding_every_button_resets_to_empty():
+def test_leaving_jev_one_button_resets_to_empty():
+    # A one-option Choice isn't Jev choosing, so reset before it gets there.
     tracker = ProgressTracker(stretch=1)
     tracker.record(1, "A")
-    for button in BUTTONS[:-1]:
+    for button in BUTTONS[:6]:
         tracker.record(1, button)
-    assert tracker.excluded == frozenset(BUTTONS[:-1])
-    tracker.record(1, BUTTONS[-1])
+    assert tracker.excluded == frozenset(BUTTONS[:6])
+    tracker.record(1, BUTTONS[6])
     assert tracker.excluded == frozenset()

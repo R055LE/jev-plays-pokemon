@@ -18,7 +18,7 @@ for the implementation plan.
 
 `--max-turns` stops the run cleanly; leave it off to run until Ctrl-C. Set it
 for anything launched through secrets-broker, since Ctrl-C there doesn't reach
-the Python process. `--speed` is an emulation speed multiplier, 0 for uncapped.
+the Python process. `--speed` is a whole-number speed multiplier, 0 for uncapped.
 Each run starts from the beginning of the game; there's no save/resume.
 
 ## Testing

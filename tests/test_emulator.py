@@ -15,6 +15,7 @@ class FakePyBoy:
         self.speed = None
         self.tilemap_background = FakeTileMap([[1, 2], [3, 4]])
         self.tilemap_window = FakeTileMap([[0, 0], [0, 0]])
+        self.memory = {0xFF42: 0, 0xFF43: 0}
 
     def set_emulation_speed(self, speed):
         self.speed = speed
@@ -42,14 +43,15 @@ def test_press_holds_then_settles():
 
     emulator.press("DOWN", 3)
 
-    assert pyboy.calls == [("button", "down", 48), ("tick", 48), ("tick", SETTLE_FRAMES)]
+    # One tick per frame: PyBoy only frame-limits once per tick() call.
+    assert pyboy.calls == [("button", "down", 48)] + [("tick", 1)] * (48 + SETTLE_FRAMES)
 
 
 def test_wait_only_settles():
     pyboy = FakePyBoy()
     Emulator("rom.gb", pyboy=pyboy).wait()
 
-    assert pyboy.calls == [("tick", SETTLE_FRAMES)]
+    assert pyboy.calls == [("tick", 1)] * SETTLE_FRAMES
 
 
 def test_speed_is_passed_to_pyboy():
@@ -66,4 +68,13 @@ def test_tilemap_hash_changes_with_tilemap_contents():
 
     assert emulator.tilemap_hash() == before
     pyboy.tilemap_window = FakeTileMap([[0, 9], [0, 0]])
+    assert emulator.tilemap_hash() != before
+
+
+def test_tilemap_hash_changes_with_scroll():
+    pyboy = FakePyBoy()
+    emulator = Emulator("rom.gb", pyboy=pyboy)
+    before = emulator.tilemap_hash()
+
+    pyboy.memory[0xFF43] = 16
     assert emulator.tilemap_hash() != before
